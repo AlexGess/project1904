@@ -33,8 +33,8 @@ struct p1904_mesh_s {
 p1904_mesh_t *p1904_mesh_create(const char *device, const char *addr);
 int p1904_mesh_sendto(p1904_mesh_t *mesh, const char *addr, const char *str,
     size_t len);
-
-// int p1904_mesh_listen();
+int p1904_mesh_recvfrom(p1904_mesh_t *mesh, const char *addr, const char *buf,
+    size_t size);
 
 void p1904_mesh_destroy(p1904_mesh_t *mesh);
 
