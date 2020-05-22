@@ -5,7 +5,6 @@
 #include "p1904_mesh_api.h"
 
 
-
 p1904_mesh_addr_t p1904_mesh_addr_to_bin(const char *addr)
 {
     char buf[16];
@@ -47,6 +46,7 @@ const char *p1904_mesh_bin_to_addr(p1904_mesh_addr_t addr)
 p1904_mesh_t *p1904_mesh_create(const char *device, const char *addr)
 {
     p1904_mesh_t *mesh;
+    p1904_mesh_addr_t bin_addr;
     int err;
 
     mesh = malloc(sizeof(p1904_mesh_t));
@@ -55,9 +55,14 @@ p1904_mesh_t *p1904_mesh_create(const char *device, const char *addr)
     }
 
     err = p1904_lora_rak811_init(&(mesh->module), device);
+    if (err != EXIT_SUCCESS) {
+        goto failed;
+    }
+
+    bin_addr = p1904_mesh_addr_to_bin(addr);
 
 
-    /* convert addr */
+    mesh->addr = bin_addr;
 
     return mesh;
 
@@ -74,12 +79,32 @@ failed:
 int p1904_mesh_sendto(p1904_mesh_t *mesh, const char *addr, const char *str,
     size_t len)
 {
+    static p1904_mesh_header_t header;
+    static char packet[P1904_MAX_PACKET_SIZE];
+    size_t total_size;
 
+    total_size = sizeof(p1904_mesh_header_t) + len;
 
+    if (len == 0) {
+        return EXIT_FAILURE;
+    }
 
+    if (total_size > P1904_MAX_PACKET_SIZE) {
+        return EXIT_FAILURE;
+    }
 
+    header.src = mesh->addr;
+    header.dst = p1904_mesh_addr_to_bin(addr);
+    header.ttl = P1904_DEFAULT_TTL;
+    header.size = len;
 
+    memmove(packet, &header, sizeof(p1904_mesh_header_t));
+    memmove(p1904_packet_data_offset(packet), str, len);
 
+    if (!mesh->module.active_send) {
+        p1904_lora_rak811_init_to_send(&(mesh->module));
+    }
+    p1904_lora_rak811_send(&(mesh->module), packet, total_size);
 }
 
 

@@ -8,6 +8,8 @@
 
 #include "p1904_lora_rak811.h"
 
+#define P1904_DELAY_TIME  3000000
+
 
 static int p1904_set_usart_attr(int fd, int speed, int parity)
 {
@@ -58,6 +60,18 @@ static int p1904_set_usart_blocking(int fd, int should_block)
 
 static ssize_t p1904_write_str_to_fd(int fd, const char *str)
 {
+    ssize_t n;
+
+    n = write(fd, str, strlen(str));
+    if (n < 0) {
+        return -1;
+    }
+
+    return n;
+}
+
+static ssize_t p1904_write_str_to_fd_crlf(int fd, const char *str)
+{
     static char buf[1024];
     ssize_t len;
     ssize_t n;
@@ -107,6 +121,7 @@ int p1904_lora_rak811_init(p1904_lora_module_t *m, const char *device)
     memset(m, 0, sizeof(p1904_lora_module_t));
 
     fd = open(device, O_RDWR|O_NOCTTY|O_SYNC);
+    // fd = STDIN_FILENO;
     if (fd < 0) {
         goto failed;
     }
@@ -131,27 +146,39 @@ failed:
     return EXIT_FAILURE;
 }
 
-
-int p1904_lora_rak811_send(p1904_lora_module_t *m, const char *addr,
-    const char *str, size_t len)
+int p1904_lora_rak811_init_to_send(p1904_lora_module_t *m)
 {
+    ssize_t bytes_wrote;
     static char *cmd = 
         "at+mode=1\r\n"
-        "at+rf_config=867700000,10,0,1,8,14\r\n"
-        "at+txc=100,1000,";
+        "at+rf_config=867700000,10,0,1,8,14\r\n";
+    
+    bytes_wrote = p1904_write_str_to_fd(m->fd, cmd);
+    if (bytes_wrote < 0) {
+        return EXIT_FAILURE;
+    }
 
-    static char buf[P1904_MAX_DATA_SIZE + sizeof(cmd)];
+    usleep(P1904_DELAY_TIME);
+
+    m->active_send = 1;
+    m->active_recv = 0;
+
+    return EXIT_SUCCESS;
+}
+
+int p1904_lora_rak811_send(p1904_lora_module_t *m, void *data, size_t len)
+{
+    static char *cmd = "at+txc=1,1000,";
     static char converted_data[P1904_MAX_DATA_SIZE];
 
     if (P1904_MAX_DATA_SIZE <= (len * 2)) {
         return EXIT_FAILURE;
     }
 
-    p1094_convert_str_to_at_format(str, len, converted_data);
-
-    snprintf(buf, sizeof(buf), "%s%s\r\n", cmd, converted_data);
+    p1094_convert_str_to_at_format((const char *) data, len, converted_data);
 
     p1904_write_str_to_fd(m->fd, cmd);
+    p1904_write_str_to_fd_crlf(m->fd, converted_data);
 
     return EXIT_SUCCESS;
 }

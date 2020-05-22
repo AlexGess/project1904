@@ -6,14 +6,27 @@
 
 #include "p1904_lora_rak811.h"
 
+#define P1904_DEFAULT_TTL  32
+#define P1904_MAX_PACKET_SIZE  512
+#define p1904_packet_data_offset(ptr)  (ptr + sizeof(p1904_mesh_header_t))
 
 typedef struct p1904_mesh_s p1904_mesh_t;
+typedef struct p1904_mesh_header_s p1904_mesh_header_t;
 typedef uint32_t p1904_mesh_addr_t;
 
 
+struct p1904_mesh_header_s {
+    p1904_mesh_addr_t src;
+    p1904_mesh_addr_t dst;
+    uint16_t size;
+    uint16_t ttl;
+    /* ... */
+};
 
 struct p1904_mesh_s {
     p1904_lora_module_t module;
+    p1904_mesh_addr_t addr;
+    /* ... */
 };
 
 
