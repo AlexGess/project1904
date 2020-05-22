@@ -14,12 +14,15 @@ int main(int argc, char *const argv[])
         return 1;
     }
 
-    mesh1 = p1904_mesh_create(argv[1]);
-    if (!mesh1) {
-        fprintf(stderr, "p1904_lora_init() failed\n");
-        return 1;
-    }
+    // mesh1 = p1904_mesh_create(argv[1]);
+    // if (!mesh1) {
+    //     fprintf(stderr, "p1904_lora_init() failed\n");
+    //     return 1;
+    // }
 
+
+
+    p1904_mesh_sendto(mesh1, "10.0.0.0", "hello", sizeof("hello"));
 
 
 

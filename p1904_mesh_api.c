@@ -84,7 +84,24 @@ static ssize_t p1904_read_str_from_fd(int fd, char *buf, size_t len)
     return n;
 }
 
-p1904_mesh_t *p1904_mesh_create(const char *device)
+/* The output buffer must be at least twice as large as the input buffer */
+static int p1094_convert_str_to_at_format(const char *buf_in, size_t buf_in_len,
+    char *buf_out)
+{
+    char *ptr;
+
+    ptr = buf_out;
+
+    for (size_t i = 0; i < buf_in_len; i++) {
+        sprintf(ptr, "%02x", buf_in[i]);
+        ptr += 2; /* Hex number occupy 2 bytes */
+    }
+
+    return EXIT_SUCCESS;
+}
+
+
+p1904_mesh_t *p1904_mesh_create(const char *device, const char *addr)
 {
     p1904_mesh_t *mesh;
     int fd;
@@ -126,14 +143,28 @@ failed:
     return NULL;
 }
 
-int p1904_mesh_send(p1904_mesh_t *mesh, const char *str, size_t len)
+int p1904_mesh_sendto(p1904_mesh_t *mesh, const char *addr, const char *str,
+    size_t len)
 {
-    static char *setup_cmd = 
+    static char buf[1024];
+    static char converted_data[512];
+
+    static char *cmd = 
         "at+mode=1\r\n"
-        "at+rf_config=867700000,10,0,1,8,14\r\n";
+        "at+rf_config=867700000,10,0,1,8,14\r\n"
+        "at+txc=100,1000,";
+
+    if (sizeof(converted_data) <= (len * 2)) {
+        return EXIT_FAILURE;
+    }
+
+    p1094_convert_str_to_at_format(str, len, converted_data);
+
+    snprintf(buf, sizeof(buf), "%s%s\r\n", cmd, converted_data);
 
 
-    p1904_write_str_to_fd(mesh->fd, setup_cmd);
+    printf("%s\n", buf);
+    // p1904_write_str_to_fd(mesh->fd, setup_cmd);
 
 
 
