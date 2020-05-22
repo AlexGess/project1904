@@ -20,6 +20,7 @@ struct p1904_mesh_header_s {
     p1904_mesh_addr_t dst;
     uint16_t size;
     uint16_t ttl;
+    uint32_t checksum;
     /* ... */
 };
 
@@ -31,7 +32,7 @@ struct p1904_mesh_s {
 
 
 p1904_mesh_t *p1904_mesh_create(const char *device, const char *addr);
-int p1904_mesh_sendto(p1904_mesh_t *mesh, const char *addr, const char *str,
+int p1904_mesh_sendto(p1904_mesh_t *mesh, const char *addr, const char *data,
     size_t len);
 int p1904_mesh_recvfrom(p1904_mesh_t *mesh, const char *addr, const char *buf,
     size_t size);

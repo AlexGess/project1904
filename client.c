@@ -21,7 +21,6 @@ int main(int argc, char *const argv[])
     }
 
     p1904_mesh_sendto(mesh1, "10.0.0.2", "hello", sizeof("hello"));
-    p1904_mesh_sendto(mesh1, "10.0.0.2", "hi", sizeof("hi"));
 
     p1904_mesh_destroy(mesh1);
 

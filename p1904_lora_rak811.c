@@ -110,7 +110,7 @@ static char *p1904_lora_rak811_extract_data(void *buf, size_t *len_out)
         if (i == 3) {
             len = strlen(token);
             token[len-2] = '\0'; /* Remove CRLF */
-            *len_out = len;
+            *len_out = len - 2;
             return token;
         }
         token = strtok_r(NULL, ",", &save_ptr);
@@ -128,7 +128,7 @@ static void p1094_convert_str_to_at_format(const char *buf_in,
     ptr = buf_out;
 
     for (size_t i = 0; i < buf_in_len; i++) {
-        sprintf(ptr, "%02x", buf_in[i]);
+        sprintf(ptr, "%02hhx", buf_in[i]);
         ptr += 2; /* Hex number occupy 2 bytes */
     }
 }
@@ -147,6 +147,7 @@ static void p1094_convert_at_format_to_str(char *buf_in,
         buf_out[i] = strtol(temp_buf, NULL, 16);
         ptr += 2; /* Hex number occupy 2 bytes */
     }
+
 }
 
 int p1904_lora_rak811_init(p1904_lora_module_t *m, const char *device)
@@ -214,7 +215,6 @@ ssize_t p1904_lora_rak811_send(p1904_lora_module_t *m, void *data, size_t len)
 
     p1904_write_str_to_fd(m->fd, cmd);
     p1904_write_str_to_fd_crlf(m->fd, converted_data);
-    printf("%s\n", converted_data);
 
     return len;
 }
@@ -228,9 +228,7 @@ ssize_t p1904_lora_rak811_recv(p1904_lora_module_t *m, void *buf, size_t size)
     ssize_t bytes_read;
     ssize_t bytes_wrote;
     size_t len;
-
     char *data;
-    uint8_t *byte_ptr;
 
 
     bytes_wrote = p1904_write_str_to_fd(m->fd, cmd);
@@ -240,15 +238,14 @@ ssize_t p1904_lora_rak811_recv(p1904_lora_module_t *m, void *buf, size_t size)
 
     while (1) {
         bytes_read = p1904_read_str_from_fd(m->fd, buf1, sizeof(buf1));
-        buf1[bytes_read] = '\0';
-        if (bytes_read) {  
+        if (bytes_read < sizeof(buf1) && bytes_read > 0) {
+            buf1[bytes_read] = '\0';
             data = p1904_lora_rak811_extract_data(buf1, &len);
             if (data && len <= (size * 2)) {
-                printf("%s\n", data);
 
                 p1094_convert_at_format_to_str(data, len, buf);
 
-                return len;
+                return len / 2;
             }
         }
     }
