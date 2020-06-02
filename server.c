@@ -3,6 +3,7 @@
 #include <stddef.h>
 
 #include "p1904_mesh_api.h"
+#include "p1904_route_table.h"
 
 
 int main(int argc, char *const argv[])

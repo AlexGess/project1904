@@ -9,6 +9,7 @@
 #define P1904_DEFAULT_TTL  32
 #define P1904_MAX_PACKET_SIZE  512
 #define p1904_packet_data_offset(ptr)  (ptr + sizeof(p1904_mesh_header_t))
+#define P1904_INVALID_ADDR  0
 
 typedef struct p1904_mesh_s p1904_mesh_t;
 typedef struct p1904_mesh_header_s p1904_mesh_header_t;
@@ -18,9 +19,10 @@ typedef uint32_t p1904_mesh_addr_t;
 struct p1904_mesh_header_s {
     p1904_mesh_addr_t src;
     p1904_mesh_addr_t dst;
+    p1904_mesh_addr_t gtw;
+    uint32_t checksum;
     uint16_t size;
     uint16_t ttl;
-    uint32_t checksum;
     /* ... */
 };
 

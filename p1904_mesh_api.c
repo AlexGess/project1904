@@ -141,7 +141,8 @@ int p1904_mesh_recvfrom(p1904_mesh_t *mesh, const char *addr, const char *buf,
     bytes_recv = 0;
 
     while (1) {
-        bytes_recv = p1904_lora_rak811_recv(&(mesh->module), packet, P1904_MAX_PACKET_SIZE);
+        bytes_recv = p1904_lora_rak811_recv(&(mesh->module), packet,
+            P1904_MAX_PACKET_SIZE);
         if (bytes_recv < 0) {
             return EXIT_FAILURE;
         }

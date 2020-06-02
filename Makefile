@@ -3,11 +3,13 @@ BIN_FILE_SERVER = server
 
 SRC_CLIENT += p1904_lora_rak811.c
 SRC_CLIENT += p1904_crc32.c
+SRC_CLIENT += p1904_route_table.c
 SRC_CLIENT += p1904_mesh_api.c
 SRC_CLIENT += client.c
 
 SRC_SERVER += p1904_lora_rak811.c
 SRC_SERVER += p1904_crc32.c
+SRC_SERVER += p1904_route_table.c
 SRC_SERVER += p1904_mesh_api.c
 SRC_SERVER += server.c
 
