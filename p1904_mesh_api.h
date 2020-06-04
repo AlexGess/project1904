@@ -38,7 +38,7 @@ int p1904_mesh_sendto(p1904_mesh_t *mesh, const char *addr, const char *data,
     size_t len);
 int p1904_mesh_recvfrom(p1904_mesh_t *mesh, const char *addr, const char *buf,
     size_t size);
-
+int p1904_mesh_do_routing(p1904_mesh_t *mesh);
 void p1904_mesh_destroy(p1904_mesh_t *mesh);
 
 p1904_mesh_addr_t p1904_mesh_addr_to_bin(const char *addr);

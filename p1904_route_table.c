@@ -78,20 +78,18 @@ int p1904_route_table_add(const char *dst, const char *gtw, uint16_t metric,
     return EXIT_SUCCESS;
 }
 
-p1904_mesh_addr_t p1904_route_table_find(const char *dst)
+p1904_mesh_addr_t p1904_route_table_find(p1904_mesh_addr_t dst)
 {
     p1904_route_table_record_t *record;
     p1904_route_table_record_t *temp;
-    p1904_mesh_addr_t dst_bin;
+
     uint16_t best_metric = 65535;
     bool found = false;
-
-    dst_bin = p1904_mesh_addr_to_bin(dst);
 
     for (size_t i = 0; i < P1904_ROUTE_TABLE_SIZE; i++) {
         record = &(p1904_route_table[i]);
         if (record->active) {
-            if (record->dst == dst_bin) {
+            if (record->dst == dst) {
                 if (best_metric > record->metric) {
                     best_metric = record->metric;
                     temp = record;
@@ -108,6 +106,15 @@ p1904_mesh_addr_t p1904_route_table_find(const char *dst)
 
     return temp->gtw;
 }
+
+p1904_mesh_addr_t p1904_route_table_find1(const char *dst)
+{
+    p1904_mesh_addr_t dst_bin;
+
+    dst_bin = p1904_mesh_addr_to_bin(dst);
+    return p1904_route_table_find(dst_bin);
+}
+
 
 void p1904_route_table_del(const char *dst, const char *gtw)
 {

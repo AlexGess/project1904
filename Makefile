@@ -1,5 +1,5 @@
 BIN_FILE_CLIENT = client
-BIN_FILE_SERVER = server
+BIN_FILE_NODE = node
 
 SRC_CLIENT += p1904_lora_rak811.c
 SRC_CLIENT += p1904_crc32.c
@@ -7,11 +7,11 @@ SRC_CLIENT += p1904_route_table.c
 SRC_CLIENT += p1904_mesh_api.c
 SRC_CLIENT += client.c
 
-SRC_SERVER += p1904_lora_rak811.c
-SRC_SERVER += p1904_crc32.c
-SRC_SERVER += p1904_route_table.c
-SRC_SERVER += p1904_mesh_api.c
-SRC_SERVER += server.c
+SRC_NODE += p1904_lora_rak811.c
+SRC_NODE += p1904_crc32.c
+SRC_NODE += p1904_route_table.c
+SRC_NODE += p1904_mesh_api.c
+SRC_NODE += node.c
 
 CFLAGS += -Wall
 debug: CFLAGS += -g3 -ggdb3 -O0 -DDEBUG
@@ -25,11 +25,11 @@ all: build
 
 debug: mkdirs
 	$(CC) $(SRC_CLIENT) $(CFLAGS) $(LDFLAGS) -o bin/$(BIN_FILE_CLIENT)
-	$(CC) $(SRC_SERVER) $(CFLAGS) $(LDFLAGS) -o bin/$(BIN_FILE_SERVER)
+	$(CC) $(SRC_NODE) $(CFLAGS) $(LDFLAGS) -o bin/$(BIN_FILE_NODE)
 
 build: mkdirs
 	$(CC) $(SRC_CLIENT) $(CFLAGS) $(LDFLAGS) -o bin/$(BIN_FILE_CLIENT)
-	$(CC) $(SRC_SERVER) $(CFLAGS) $(LDFLAGS) -o bin/$(BIN_FILE_SERVER)
+	$(CC) $(SRC_NODE) $(CFLAGS) $(LDFLAGS) -o bin/$(BIN_FILE_NODE)
 
 clean:
 	rm -f bin/*
