@@ -147,7 +147,7 @@ void p1904_route_table_print(void)
     char *temp;
     static const char *str1 =
         "+-----------------+-----------------+---------+----------+\n"
-        "|   Destination   |     Gateway     | Metrics | TTL      |\n"
+        "|   Destination   |     Gateway     | Metrics |    TTL   |\n"
         "+-----------------+-----------------+---------+----------+\n";
     static const char *str2 =
         "+-----------------+-----------------+---------+----------+\n";
@@ -157,7 +157,6 @@ void p1904_route_table_print(void)
     for (size_t i = 0; i < P1904_ROUTE_TABLE_SIZE; i++) {
         record = &(p1904_route_table[i]);
         if (record->active) {
-
             temp = (char *) p1904_mesh_bin_to_addr(record->dst);
             memmove(buf1, temp, strlen(temp));
             buf1[strlen(temp)] = '\0';

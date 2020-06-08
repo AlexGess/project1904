@@ -4,6 +4,7 @@
 
 #include "p1904_mesh_api.h"
 #include "p1904_route_table.h"
+#include "p1904_ncmp.h"
 #include "p1904_crc32.h"
 
 
@@ -129,7 +130,7 @@ int p1904_mesh_sendto(p1904_mesh_t *mesh, const char *addr, const char *data,
     printf("gtw: %s\n", p1904_mesh_bin_to_addr(header->gtw));
     printf("ttl: %u\n", header->ttl);
     printf("size: %u\n", header->size);
-    printf("checksum: %u\n", header->checksum);
+    printf("checksum: %#x\n", header->checksum);
 #endif
 
     return EXIT_SUCCESS;
@@ -180,7 +181,7 @@ int p1904_mesh_recvfrom(p1904_mesh_t *mesh, const char *addr, const char *buf,
     printf("gtw: %s\n", p1904_mesh_bin_to_addr(header->gtw));
     printf("ttl: %u\n", header->ttl);
     printf("size: %u\n", header->size);
-    printf("checksum: %u\n", header->checksum);
+    printf("checksum: %#x\n", header->checksum);
 #endif
         if (mesh->addr == header->dst && addr_bin == header->src) {
             break; /* The package is for us and we wait it from this address */
@@ -264,7 +265,7 @@ int p1904_mesh_do_routing(p1904_mesh_t *mesh)
         printf("gtw: %s\n", p1904_mesh_bin_to_addr(header->gtw));
         printf("ttl: %u\n", header->ttl);
         printf("size: %u\n", header->size);
-        printf("checksum: %u\n", header->checksum);
+        printf("checksum: %#x\n", header->checksum);
 #endif
     }
 
