@@ -2,10 +2,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "p1904_mesh_api.h"
 #include "p1904_route_table.h"
 #include "p1904_ncmp.h"
 #include "p1904_crc32.h"
+#include "p1904_mesh_api.h"
 
 
 p1904_mesh_addr_t p1904_mesh_addr_to_bin(const char *addr)
@@ -136,6 +136,38 @@ int p1904_mesh_sendto(p1904_mesh_t *mesh, const char *addr, const char *data,
     return EXIT_SUCCESS;
 }
 
+int p1904_mesh_sendto_packet(p1904_mesh_t *mesh, uint8_t *packet,
+    size_t packet_size)
+{
+    p1904_mesh_header_t *header;
+    header = (p1904_mesh_header_t *) packet;
+    ssize_t bytes_sent;
+
+    if (packet_size > P1904_MAX_PACKET_SIZE) {
+        return EXIT_FAILURE;
+    }
+
+    if (!mesh->module.active) {
+        p1904_lora_rak811_activate(&(mesh->module));
+    }
+
+    bytes_sent = p1904_lora_rak811_send(&(mesh->module), packet, packet_size);
+    if (bytes_sent < 0) {
+        return EXIT_FAILURE;
+    }
+
+#ifdef DEBUG
+    printf("src: %s\n", p1904_mesh_bin_to_addr(header->src));
+    printf("dst: %s\n", p1904_mesh_bin_to_addr(header->dst));
+    printf("gtw: %s\n", p1904_mesh_bin_to_addr(header->gtw));
+    printf("ttl: %u\n", header->ttl);
+    printf("size: %u\n", header->size);
+    printf("checksum: %#x\n", header->checksum);
+#endif
+
+    return EXIT_SUCCESS;
+}
+
 int p1904_mesh_recvfrom(p1904_mesh_t *mesh, const char *addr, const char *buf,
     size_t size)
 {
@@ -183,6 +215,12 @@ int p1904_mesh_recvfrom(p1904_mesh_t *mesh, const char *addr, const char *buf,
     printf("size: %u\n", header->size);
     printf("checksum: %#x\n", header->checksum);
 #endif
+        if (mesh->addr == header->dst &&
+            addr_bin == p1904_mesh_addr_to_bin(P1904_ADDR_ANY))
+        {
+            break; /* We capture packets from ANY address */
+        }
+
         if (mesh->addr == header->dst && addr_bin == header->src) {
             break; /* The package is for us and we wait it from this address */
         }

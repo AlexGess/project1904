@@ -6,6 +6,7 @@ SRC_CLIENT += p1904_crc32.c
 SRC_CLIENT += p1904_route_table.c
 SRC_CLIENT += p1904_ncmp.c
 SRC_CLIENT += p1904_mesh_api.c
+SRC_CLIENT += p1904_traceroute.c
 SRC_CLIENT += client.c
 
 SRC_NODE += p1904_lora_rak811.c

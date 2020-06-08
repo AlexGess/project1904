@@ -6,10 +6,11 @@
 
 #include "p1904_lora_rak811.h"
 
-#define P1904_DEFAULT_TTL  32
+#define P1904_DEFAULT_TTL      32
 #define P1904_MAX_PACKET_SIZE  512
+#define P1904_INVALID_ADDR     0
+#define P1904_ADDR_ANY         "255.255.255.255"
 #define p1904_packet_data_offset(ptr)  (ptr + sizeof(p1904_mesh_header_t))
-#define P1904_INVALID_ADDR  0
 
 typedef struct p1904_mesh_s p1904_mesh_t;
 typedef struct p1904_mesh_header_s p1904_mesh_header_t;
@@ -36,6 +37,8 @@ struct p1904_mesh_s {
 p1904_mesh_t *p1904_mesh_create(const char *device, const char *addr);
 int p1904_mesh_sendto(p1904_mesh_t *mesh, const char *addr, const char *data,
     size_t len);
+int p1904_mesh_sendto_packet(p1904_mesh_t *mesh, uint8_t *packet,
+    size_t packet_size);
 int p1904_mesh_recvfrom(p1904_mesh_t *mesh, const char *addr, const char *buf,
     size_t size);
 int p1904_mesh_do_routing(p1904_mesh_t *mesh);
