@@ -245,6 +245,8 @@ int p1904_mesh_do_routing(p1904_mesh_t *mesh)
         }
 
         if (header->ttl == 0) {
+            p1904_mesh_send_ncmp(mesh, p1904_mesh_bin_to_addr(header->src),
+                P1904_NCMP_TYPE1, P1904_NCMP_ERR1);
             continue; /* The package has expired */
         }
         else {

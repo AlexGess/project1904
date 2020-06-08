@@ -20,6 +20,7 @@ struct p1904_ncmp_header_s {
     uint8_t code;
 };
 
-
+int p1904_mesh_send_ncmp(p1904_mesh_t *mesh, const char *addr,
+    uint8_t type, uint8_t code);
 
 #endif /* P1904_NCMP_H */
