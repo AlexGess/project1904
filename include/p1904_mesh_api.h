@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#include "p1904_errno.h"
 #include "p1904_lora_rak811.h"
 
 #define P1904_DEFAULT_TTL      32
@@ -35,13 +36,13 @@ struct p1904_mesh_s {
 
 
 p1904_mesh_t *p1904_mesh_create(const char *device, const char *addr);
-int p1904_mesh_sendto(p1904_mesh_t *mesh, const char *addr, const char *data,
-    size_t len);
-int p1904_mesh_sendto_packet(p1904_mesh_t *mesh, uint8_t *packet,
+p1904_err_t p1904_mesh_sendto(p1904_mesh_t *mesh, const char *addr,
+    const char *data, size_t len);
+p1904_err_t p1904_mesh_sendto_packet(p1904_mesh_t *mesh, uint8_t *packet,
     size_t packet_size);
-int p1904_mesh_recvfrom(p1904_mesh_t *mesh, const char *addr, const char *buf,
-    size_t size);
-int p1904_mesh_do_routing(p1904_mesh_t *mesh);
+p1904_err_t p1904_mesh_recvfrom(p1904_mesh_t *mesh, const char *addr,
+    const char *buf, size_t size);
+p1904_err_t p1904_mesh_do_routing(p1904_mesh_t *mesh);
 void p1904_mesh_destroy(p1904_mesh_t *mesh);
 
 p1904_mesh_addr_t p1904_mesh_addr_to_bin(const char *addr);

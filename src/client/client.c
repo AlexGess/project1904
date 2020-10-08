@@ -6,7 +6,8 @@
 #include "p1904_route_table.h"
 
 
-int main(int argc, char *const argv[])
+int
+main(int argc, char *const argv[])
 {
     p1904_mesh_t *mesh1;
     const char *client_addr = "127.0.0.5";

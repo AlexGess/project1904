@@ -11,7 +11,8 @@
 #include "p1904_traceroute.h"
 
 
-int p1904_do_traceroute(p1904_mesh_t *mesh, const char *addr, size_t n)
+p1904_err_t
+p1904_do_traceroute(p1904_mesh_t *mesh, const char *addr, size_t n)
 {
     static uint8_t packet[P1904_MAX_PACKET_SIZE];
     static uint8_t buf[P1904_MAX_PACKET_SIZE];
@@ -33,7 +34,7 @@ int p1904_do_traceroute(p1904_mesh_t *mesh, const char *addr, size_t n)
 
     gtw = p1904_route_table_find(addr_bin);
     if (gtw == P1904_INVALID_ADDR) {
-        return EXIT_FAILURE;
+        return P1904_FAILED;
     }
 
     header->src = mesh->addr;
@@ -49,7 +50,7 @@ int p1904_do_traceroute(p1904_mesh_t *mesh, const char *addr, size_t n)
 
         p1904_mesh_sendto_packet(mesh, packet, P1904_MAX_PACKET_SIZE);
         if (p1904_mesh_recvfrom(mesh, P1904_ADDR_ANY, (const char *) buf,
-            P1904_MAX_PACKET_SIZE) != EXIT_SUCCESS)
+            P1904_MAX_PACKET_SIZE) != P1904_OK)
         {
             continue;
         }
@@ -60,5 +61,5 @@ int p1904_do_traceroute(p1904_mesh_t *mesh, const char *addr, size_t n)
 
     }
 
-    return EXIT_SUCCESS;
+    return P1904_OK;
 }

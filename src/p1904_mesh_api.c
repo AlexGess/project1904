@@ -8,7 +8,8 @@
 #include "p1904_mesh_api.h"
 
 
-p1904_mesh_addr_t p1904_mesh_addr_to_bin(const char *addr)
+p1904_mesh_addr_t
+p1904_mesh_addr_to_bin(const char *addr)
 {
     char buf[16];
     char *token;
@@ -30,7 +31,8 @@ p1904_mesh_addr_t p1904_mesh_addr_to_bin(const char *addr)
     return temp;
 }
 
-const char *p1904_mesh_bin_to_addr(p1904_mesh_addr_t addr)
+const char *
+p1904_mesh_bin_to_addr(p1904_mesh_addr_t addr)
 {
     static _Thread_local char buf[16];
     uint8_t *byte_ptr;
@@ -46,7 +48,8 @@ const char *p1904_mesh_bin_to_addr(p1904_mesh_addr_t addr)
     return buf;
 }
 
-p1904_mesh_t *p1904_mesh_create(const char *device, const char *addr)
+p1904_mesh_t *
+p1904_mesh_create(const char *device, const char *addr)
 {
     p1904_mesh_t *mesh;
     p1904_mesh_addr_t bin_addr;
@@ -58,7 +61,7 @@ p1904_mesh_t *p1904_mesh_create(const char *device, const char *addr)
     }
 
     err = p1904_lora_rak811_init(&(mesh->module), device);
-    if (err != EXIT_SUCCESS) {
+    if (err != P1904_OK) {
         goto failed;
     }
 
@@ -78,7 +81,8 @@ failed:
     return NULL;
 }
 
-int p1904_mesh_sendto(p1904_mesh_t *mesh, const char *addr, const char *data,
+p1904_err_t
+p1904_mesh_sendto(p1904_mesh_t *mesh, const char *addr, const char *data,
     size_t len)
 {
     static uint8_t packet[P1904_MAX_PACKET_SIZE];
@@ -95,7 +99,7 @@ int p1904_mesh_sendto(p1904_mesh_t *mesh, const char *addr, const char *data,
     packet_size = len + sizeof(p1904_mesh_header_t);
 
     if (packet_size > P1904_MAX_PACKET_SIZE) {
-        return EXIT_FAILURE;
+        return P1904_FAILED;
     }
 
     if (!mesh->module.active) {
@@ -104,7 +108,7 @@ int p1904_mesh_sendto(p1904_mesh_t *mesh, const char *addr, const char *data,
 
     gtw = p1904_route_table_find(addr_bin);
     if (gtw == P1904_INVALID_ADDR) {
-        return EXIT_FAILURE;
+        return P1904_FAILED;
     }
 
     header->src = mesh->addr;
@@ -121,7 +125,7 @@ int p1904_mesh_sendto(p1904_mesh_t *mesh, const char *addr, const char *data,
 
     bytes_sent = p1904_lora_rak811_send(&(mesh->module), packet, packet_size);
     if (bytes_sent < 0) {
-        return EXIT_FAILURE;
+        return P1904_FAILED;
     }
 
 #ifdef DEBUG
@@ -133,18 +137,20 @@ int p1904_mesh_sendto(p1904_mesh_t *mesh, const char *addr, const char *data,
     printf("checksum: %#x\n", header->checksum);
 #endif
 
-    return EXIT_SUCCESS;
+    return P1904_OK;
 }
 
-int p1904_mesh_sendto_packet(p1904_mesh_t *mesh, uint8_t *packet,
+p1904_err_t
+p1904_mesh_sendto_packet(p1904_mesh_t *mesh, uint8_t *packet,
     size_t packet_size)
 {
     p1904_mesh_header_t *header;
-    header = (p1904_mesh_header_t *) packet;
     ssize_t bytes_sent;
 
+    header = (p1904_mesh_header_t *) packet;
+
     if (packet_size > P1904_MAX_PACKET_SIZE) {
-        return EXIT_FAILURE;
+        return P1904_FAILED;
     }
 
     if (!mesh->module.active) {
@@ -153,7 +159,7 @@ int p1904_mesh_sendto_packet(p1904_mesh_t *mesh, uint8_t *packet,
 
     bytes_sent = p1904_lora_rak811_send(&(mesh->module), packet, packet_size);
     if (bytes_sent < 0) {
-        return EXIT_FAILURE;
+        return P1904_FAILED;
     }
 
 #ifdef DEBUG
@@ -165,10 +171,11 @@ int p1904_mesh_sendto_packet(p1904_mesh_t *mesh, uint8_t *packet,
     printf("checksum: %#x\n", header->checksum);
 #endif
 
-    return EXIT_SUCCESS;
+    return P1904_OK;
 }
 
-int p1904_mesh_recvfrom(p1904_mesh_t *mesh, const char *addr, const char *buf,
+p1904_err_t
+p1904_mesh_recvfrom(p1904_mesh_t *mesh, const char *addr, const char *buf,
     size_t size)
 {
     static uint8_t packet[P1904_MAX_PACKET_SIZE];
@@ -192,9 +199,9 @@ int p1904_mesh_recvfrom(p1904_mesh_t *mesh, const char *addr, const char *buf,
         bytes_recv = p1904_lora_rak811_recv(&(mesh->module), packet,
             P1904_MAX_PACKET_SIZE);
         if (bytes_recv < 0) {
-            return EXIT_FAILURE;
+            return P1904_FAILED;
         }
-        if (bytes_recv < sizeof(p1904_mesh_header_t)) {
+        if (bytes_recv < (ssize_t) sizeof(p1904_mesh_header_t)) {
             continue;
         }
 
@@ -233,10 +240,11 @@ int p1904_mesh_recvfrom(p1904_mesh_t *mesh, const char *addr, const char *buf,
 
     memmove((void *) buf, data, packet_size);
 
-    return EXIT_SUCCESS;
+    return P1904_OK;
 }
 
-int p1904_mesh_do_routing(p1904_mesh_t *mesh)
+p1904_err_t
+p1904_mesh_do_routing(p1904_mesh_t *mesh)
 {
     static uint8_t packet[P1904_MAX_PACKET_SIZE];
     p1904_mesh_header_t *header;
@@ -258,9 +266,9 @@ int p1904_mesh_do_routing(p1904_mesh_t *mesh)
         bytes_recv = p1904_lora_rak811_recv(&(mesh->module), packet,
             P1904_MAX_PACKET_SIZE);
         if (bytes_recv < 0) {
-            return EXIT_FAILURE;
+            return P1904_FAILED;
         }
-        if (bytes_recv < sizeof(p1904_mesh_header_t)) {
+        if (bytes_recv < (ssize_t) sizeof(p1904_mesh_header_t)) {
             continue;
         }
 
@@ -296,7 +304,7 @@ int p1904_mesh_do_routing(p1904_mesh_t *mesh)
         bytes_sent = p1904_lora_rak811_send(&(mesh->module), packet,
             packet_size);
         if (bytes_sent < 0) {
-            return EXIT_FAILURE;
+            return P1904_FAILED;
         }
 
 #ifdef DEBUG
@@ -309,10 +317,11 @@ int p1904_mesh_do_routing(p1904_mesh_t *mesh)
 #endif
     }
 
-    return EXIT_SUCCESS;
+    return P1904_OK;
 }
 
-void p1904_mesh_destroy(p1904_mesh_t *mesh)
+void
+p1904_mesh_destroy(p1904_mesh_t *mesh)
 {
     free(mesh);
 }

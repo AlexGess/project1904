@@ -18,7 +18,8 @@ struct p1904_route_table_record_s {
 static p1904_route_table_record_t p1904_route_table[P1904_ROUTE_TABLE_SIZE];
 
 
-int p1904_route_table_add(const char *dst, const char *gtw, uint16_t metric,
+p1904_err_t
+p1904_route_table_add(const char *dst, const char *gtw, uint16_t metric,
     uint16_t ttl)
 {
     p1904_route_table_record_t *record;
@@ -48,7 +49,7 @@ int p1904_route_table_add(const char *dst, const char *gtw, uint16_t metric,
         /* Update fields */
         record->metric = metric;
         record->ttl = ttl;
-        return EXIT_SUCCESS;
+        return P1904_OK;
     }
 
     /* Try to find available space for new record */
@@ -65,7 +66,7 @@ int p1904_route_table_add(const char *dst, const char *gtw, uint16_t metric,
 
     if (!found) {
         /* Route table is full */
-        return EXIT_FAILURE;
+        return P1904_FAILED;
     }
 
     record->dst = dst_bin;
@@ -75,10 +76,11 @@ int p1904_route_table_add(const char *dst, const char *gtw, uint16_t metric,
 
     record->active = true;
 
-    return EXIT_SUCCESS;
+    return P1904_OK;
 }
 
-p1904_mesh_addr_t p1904_route_table_find(p1904_mesh_addr_t dst)
+p1904_mesh_addr_t
+p1904_route_table_find(p1904_mesh_addr_t dst)
 {
     p1904_route_table_record_t *record;
     p1904_route_table_record_t *temp;
@@ -107,7 +109,8 @@ p1904_mesh_addr_t p1904_route_table_find(p1904_mesh_addr_t dst)
     return temp->gtw;
 }
 
-p1904_mesh_addr_t p1904_route_table_find1(const char *dst)
+p1904_mesh_addr_t
+p1904_route_table_find1(const char *dst)
 {
     p1904_mesh_addr_t dst_bin;
 
@@ -116,7 +119,8 @@ p1904_mesh_addr_t p1904_route_table_find1(const char *dst)
 }
 
 
-void p1904_route_table_del(const char *dst, const char *gtw)
+void
+p1904_route_table_del(const char *dst, const char *gtw)
 {
     p1904_route_table_record_t *record;
     p1904_mesh_addr_t dst_bin;
@@ -139,7 +143,8 @@ void p1904_route_table_del(const char *dst, const char *gtw)
     }
 }
 
-void p1904_route_table_print(void)
+void
+p1904_route_table_print(void)
 {
     p1904_route_table_record_t *record;
     static char buf1[50];

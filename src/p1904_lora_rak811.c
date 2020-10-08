@@ -11,11 +11,14 @@
 #define P1904_DELAY_TIME  3000000
 
 
-static int p1904_set_usart_attr(int fd, int speed, int parity)
+static p1904_err_t
+p1904_set_usart_attr(int fd, int speed, int parity)
 {
+    (void) parity;
+
     struct termios tty;
     if (tcgetattr(fd, &tty) != 0) {
-        return EXIT_FAILURE;
+        return P1904_FAILED;
     }
 
     cfsetospeed(&tty, speed);
@@ -35,30 +38,32 @@ static int p1904_set_usart_attr(int fd, int speed, int parity)
     tty.c_cflag &= ~PARENB;
 
     if (tcsetattr(fd, TCSANOW, &tty) != 0) {
-        return EXIT_FAILURE;
+        return P1904_FAILED;
     }
-    return EXIT_SUCCESS;
+    return P1904_OK;
 }
 
-static int p1904_set_usart_blocking(int fd, int should_block)
+static p1904_err_t
+p1904_set_usart_blocking(int fd, int should_block)
 {
     struct termios tty;
     memset(&tty, 0, sizeof tty);
     if (tcgetattr(fd, &tty) != 0) {
-        return EXIT_FAILURE;
+        return P1904_FAILED;
     }
 
     tty.c_cc[VMIN] = should_block ? 1 : 0;
     tty.c_cc[VTIME] = 5;
 
     if (tcsetattr(fd, TCSANOW, &tty) != 0) {
-        return EXIT_FAILURE;
+        return P1904_FAILED;
     }
 
-    return EXIT_SUCCESS;
+    return P1904_OK;
 }
 
-static ssize_t p1904_write_str_to_fd(int fd, const char *str)
+static ssize_t
+p1904_write_str_to_fd(int fd, const char *str)
 {
     ssize_t n;
 
@@ -70,7 +75,8 @@ static ssize_t p1904_write_str_to_fd(int fd, const char *str)
     return n;
 }
 
-static ssize_t p1904_write_str_to_fd_crlf(int fd, const char *str)
+static ssize_t
+p1904_write_str_to_fd_crlf(int fd, const char *str)
 {
     static char buf[1024];
     ssize_t len;
@@ -86,7 +92,8 @@ static ssize_t p1904_write_str_to_fd_crlf(int fd, const char *str)
     return n;
 }
 
-static ssize_t p1904_read_str_from_fd(int fd, char *buf, size_t size)
+static ssize_t
+p1904_read_str_from_fd(int fd, char *buf, size_t size)
 {
     ssize_t n;
 
@@ -98,7 +105,8 @@ static ssize_t p1904_read_str_from_fd(int fd, char *buf, size_t size)
     return n;
 }
 
-static char *p1904_lora_rak811_extract_data(void *buf, size_t *len_out)
+static char *
+p1904_lora_rak811_extract_data(void *buf, size_t *len_out)
 {
     char *token;
     char *save_ptr;
@@ -120,7 +128,8 @@ static char *p1904_lora_rak811_extract_data(void *buf, size_t *len_out)
 }
 
 /* The output buffer must be at least twice as large as the input buffer */
-static void p1094_convert_str_to_at_format(const char *buf_in,
+static void
+p1094_convert_str_to_at_format(const char *buf_in,
     size_t buf_in_len, char *buf_out)
 {
     char *ptr;
@@ -133,7 +142,8 @@ static void p1094_convert_str_to_at_format(const char *buf_in,
     }
 }
 
-static void p1094_convert_at_format_to_str(char *buf_in,
+static void
+p1094_convert_at_format_to_str(char *buf_in,
     size_t buf_in_len, char *buf_out)
 {
     char *ptr;
@@ -150,10 +160,11 @@ static void p1094_convert_at_format_to_str(char *buf_in,
 
 }
 
-int p1904_lora_rak811_init(p1904_lora_module_t *m, const char *device)
+p1904_err_t
+p1904_lora_rak811_init(p1904_lora_module_t *m, const char *device)
 {
     int fd;
-    int err;
+    p1904_err_t err;
 
     memset(m, 0, sizeof(p1904_lora_module_t));
 
@@ -164,26 +175,27 @@ int p1904_lora_rak811_init(p1904_lora_module_t *m, const char *device)
     }
 
     err = p1904_set_usart_attr(fd, B115200, '\n');
-    if (err != EXIT_SUCCESS) {
+    if (err != P1904_OK) {
         goto failed;
     }
     err = p1904_set_usart_blocking(fd, 0);
-    if (err != EXIT_SUCCESS) {
+    if (err != P1904_OK) {
         goto failed;
     }
 
     m->fd = fd;
 
-    return EXIT_SUCCESS;
+    return P1904_OK;
 
 failed:
     if (fd != -1) {
         close(fd);
     }
-    return EXIT_FAILURE;
+    return P1904_FAILED;
 }
 
-int p1904_lora_rak811_activate(p1904_lora_module_t *m)
+p1904_err_t
+p1904_lora_rak811_activate(p1904_lora_module_t *m)
 {
     ssize_t bytes_wrote;
     static char *cmd = 
@@ -192,17 +204,18 @@ int p1904_lora_rak811_activate(p1904_lora_module_t *m)
     
     bytes_wrote = p1904_write_str_to_fd(m->fd, cmd);
     if (bytes_wrote < 0) {
-        return EXIT_FAILURE;
+        return P1904_FAILED;
     }
 
     usleep(P1904_DELAY_TIME);
 
     m->active = 1;
 
-    return EXIT_SUCCESS;
+    return P1904_OK;
 }
 
-ssize_t p1904_lora_rak811_send(p1904_lora_module_t *m, void *data, size_t len)
+ssize_t
+p1904_lora_rak811_send(p1904_lora_module_t *m, void *data, size_t len)
 {
     const char *cmd = "at+txc=1,1000,";
     static char converted_data[P1904_MAX_DATA_SIZE];
@@ -233,12 +246,12 @@ ssize_t p1904_lora_rak811_recv(p1904_lora_module_t *m, void *buf, size_t size)
 
     bytes_wrote = p1904_write_str_to_fd(m->fd, cmd);
     if (bytes_wrote < 0) {
-        return EXIT_FAILURE;
+        return P1904_FAILED;
     }
 
     while (1) {
         bytes_read = p1904_read_str_from_fd(m->fd, buf1, sizeof(buf1));
-        if (bytes_read < sizeof(buf1) && bytes_read > 0) {
+        if (bytes_read < (ssize_t) sizeof(buf1) && bytes_read > 0) {
             buf1[bytes_read] = '\0';
             data = p1904_lora_rak811_extract_data(buf1, &len);
             if (data && len <= (size * 2)) {
@@ -251,7 +264,8 @@ ssize_t p1904_lora_rak811_recv(p1904_lora_module_t *m, void *buf, size_t size)
     }
 }
 
-void p1904_lora_rak811_fini(p1904_lora_module_t *m)
+void
+p1904_lora_rak811_fini(p1904_lora_module_t *m)
 {
     if (m->fd != -1) {
         close(m->fd);

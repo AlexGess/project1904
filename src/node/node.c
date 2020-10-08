@@ -7,7 +7,8 @@
 #include "p1904_route_table.h"
 
 
-int main(int argc, char *const argv[])
+int
+main(int argc, char *const argv[])
 {
     p1904_mesh_t *mesh1;
     const char *node_addr = "10.0.0.5";
@@ -33,7 +34,7 @@ int main(int argc, char *const argv[])
 
     p1904_route_table_print();
 
-    if (p1904_mesh_do_routing(mesh1) != EXIT_SUCCESS) {
+    if (p1904_mesh_do_routing(mesh1) != P1904_OK) {
         fprintf(stderr, "p1904_mesh_do_routing() failed\n");
         return 1;
     }
