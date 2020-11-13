@@ -3,7 +3,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
-#include <fcntl.h> 
+#include <fcntl.h>
 #include <termios.h>
 
 #include "p1904_lora_rak811.h"
@@ -127,7 +127,9 @@ p1904_lora_rak811_extract_data(void *buf, size_t *len_out)
     return NULL;
 }
 
-/* The output buffer must be at least twice as large as the input buffer */
+/*
+ * The output buffer must be at least twice as large as the input buffer
+ */
 static void
 p1094_convert_str_to_at_format(const char *buf_in,
     size_t buf_in_len, char *buf_out)
@@ -138,7 +140,7 @@ p1094_convert_str_to_at_format(const char *buf_in,
 
     for (size_t i = 0; i < buf_in_len; i++) {
         sprintf(ptr, "%02hhx", buf_in[i]);
-        ptr += 2; /* Hex number occupy 2 bytes */
+        ptr += 2; /* Hexadecimal number takes 2 bytes */
     }
 }
 
@@ -155,7 +157,7 @@ p1094_convert_at_format_to_str(char *buf_in,
     for (size_t i = 0; i < (buf_in_len / 2); i++) {
         memmove(temp_buf, ptr, 2);
         buf_out[i] = strtol(temp_buf, NULL, 16);
-        ptr += 2; /* Hex number occupy 2 bytes */
+        ptr += 2; /* Hexadecimal number takes 2 bytes */
     }
 
 }
@@ -169,7 +171,6 @@ p1904_lora_rak811_init(p1904_lora_module_t *m, const char *device)
     memset(m, 0, sizeof(p1904_lora_module_t));
 
     fd = open(device, O_RDWR|O_NOCTTY|O_SYNC);
-    // fd = STDIN_FILENO;
     if (fd < 0) {
         goto failed;
     }
@@ -225,7 +226,6 @@ p1904_lora_rak811_send(p1904_lora_module_t *m, void *data, size_t len)
     }
 
     p1094_convert_str_to_at_format((const char *) data, len, converted_data);
-
     p1904_write_str_to_fd(m->fd, cmd);
     p1904_write_str_to_fd_crlf(m->fd, converted_data);
 
@@ -255,9 +255,7 @@ ssize_t p1904_lora_rak811_recv(p1904_lora_module_t *m, void *buf, size_t size)
             buf1[bytes_read] = '\0';
             data = p1904_lora_rak811_extract_data(buf1, &len);
             if (data && len <= (size * 2)) {
-
                 p1094_convert_at_format_to_str(data, len, buf);
-
                 return len / 2;
             }
         }
@@ -267,6 +265,7 @@ ssize_t p1904_lora_rak811_recv(p1904_lora_module_t *m, void *buf, size_t size)
 void
 p1904_lora_rak811_fini(p1904_lora_module_t *m)
 {
+    m->active = 0;
     if (m->fd != -1) {
         close(m->fd);
     }

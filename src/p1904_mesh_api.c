@@ -60,7 +60,7 @@ p1904_mesh_create(const char *device, const char *addr)
         goto failed;
     }
 
-    err = p1904_lora_rak811_init(&(mesh->module), device);
+    err = p1904_lora_init(&(mesh->module), device);
     if (err != P1904_OK) {
         goto failed;
     }
@@ -76,7 +76,7 @@ failed:
     if (mesh) {
         free(mesh);
     }
-    /* p1904_lora_rak811_fini() */
+    /* p1904_lora_fini() */
 
     return NULL;
 }
@@ -103,10 +103,11 @@ p1904_mesh_sendto(p1904_mesh_t *mesh, const char *addr, const char *data,
     }
 
     if (!mesh->module.active) {
-        p1904_lora_rak811_activate(&(mesh->module));
+        p1904_lora_activate(&(mesh->module));
     }
 
-    gtw = p1904_route_table_find(addr_bin);
+    // gtw = p1904_route_table_find(addr_bin);
+    gtw = p1904_mesh_addr_to_bin(P1904_ADDR_ANY);
     if (gtw == P1904_INVALID_ADDR) {
         return P1904_FAILED;
     }
@@ -123,10 +124,11 @@ p1904_mesh_sendto(p1904_mesh_t *mesh, const char *addr, const char *data,
     checksum = p1904_do_crc32(packet, packet_size);
     header->checksum = checksum;
 
-    bytes_sent = p1904_lora_rak811_send(&(mesh->module), packet, packet_size);
+    bytes_sent = p1904_lora_send(&(mesh->module), packet, packet_size);
     if (bytes_sent < 0) {
         return P1904_FAILED;
     }
+
 
 #ifdef DEBUG
     printf("src: %s\n", p1904_mesh_bin_to_addr(header->src));
@@ -154,10 +156,10 @@ p1904_mesh_sendto_packet(p1904_mesh_t *mesh, uint8_t *packet,
     }
 
     if (!mesh->module.active) {
-        p1904_lora_rak811_activate(&(mesh->module));
+        p1904_lora_activate(&(mesh->module));
     }
 
-    bytes_sent = p1904_lora_rak811_send(&(mesh->module), packet, packet_size);
+    bytes_sent = p1904_lora_send(&(mesh->module), packet, packet_size);
     if (bytes_sent < 0) {
         return P1904_FAILED;
     }
@@ -188,7 +190,7 @@ p1904_mesh_recvfrom(p1904_mesh_t *mesh, const char *addr, const char *buf,
     ssize_t bytes_recv;
 
     if (!mesh->module.active) {
-        p1904_lora_rak811_activate(&(mesh->module));
+        p1904_lora_activate(&(mesh->module));
     }
 
     addr_bin = p1904_mesh_addr_to_bin(addr);
@@ -196,7 +198,7 @@ p1904_mesh_recvfrom(p1904_mesh_t *mesh, const char *addr, const char *buf,
     bytes_recv = 0;
 
     while (1) {
-        bytes_recv = p1904_lora_rak811_recv(&(mesh->module), packet,
+        bytes_recv = p1904_lora_recv(&(mesh->module), packet,
             P1904_MAX_PACKET_SIZE);
         if (bytes_recv < 0) {
             return P1904_FAILED;
@@ -215,12 +217,12 @@ p1904_mesh_recvfrom(p1904_mesh_t *mesh, const char *addr, const char *buf,
         header->checksum = checksum; /* Restore checksum value */
 
 #ifdef DEBUG
-    printf("src: %s\n", p1904_mesh_bin_to_addr(header->src));
-    printf("dst: %s\n", p1904_mesh_bin_to_addr(header->dst));
-    printf("gtw: %s\n", p1904_mesh_bin_to_addr(header->gtw));
-    printf("ttl: %u\n", header->ttl);
-    printf("size: %u\n", header->size);
-    printf("checksum: %#x\n", header->checksum);
+        printf("src: %s\n", p1904_mesh_bin_to_addr(header->src));
+        printf("dst: %s\n", p1904_mesh_bin_to_addr(header->dst));
+        printf("gtw: %s\n", p1904_mesh_bin_to_addr(header->gtw));
+        printf("ttl: %u\n", header->ttl);
+        printf("size: %u\n", header->size);
+        printf("checksum: %#x\n", header->checksum);
 #endif
         if (mesh->addr == header->dst &&
             addr_bin == p1904_mesh_addr_to_bin(P1904_ADDR_ANY))
@@ -256,14 +258,14 @@ p1904_mesh_do_routing(p1904_mesh_t *mesh)
     ssize_t bytes_sent;
 
     if (!mesh->module.active) {
-        p1904_lora_rak811_activate(&(mesh->module));
+        p1904_lora_activate(&(mesh->module));
     }
 
     header = (p1904_mesh_header_t *) packet;
     bytes_recv = 0;
 
     while (1) {
-        bytes_recv = p1904_lora_rak811_recv(&(mesh->module), packet,
+        bytes_recv = p1904_lora_recv(&(mesh->module), packet,
             P1904_MAX_PACKET_SIZE);
         if (bytes_recv < 0) {
             return P1904_FAILED;
@@ -273,6 +275,11 @@ p1904_mesh_do_routing(p1904_mesh_t *mesh)
         }
 
         packet_size = header->size;
+        if (packet_size > P1904_MAX_PACKET_SIZE) {
+            continue;
+        }
+
+
         checksum = header->checksum; /* Save checksum value */
         header->checksum = 0;
         new_checksum = p1904_do_crc32(packet, packet_size);
@@ -281,18 +288,19 @@ p1904_mesh_do_routing(p1904_mesh_t *mesh)
         }
         header->checksum = checksum; /* Restore checksum value */
 
-        if (header->gtw != mesh->addr) {
-            continue; /* This package is not for us */
-        }
+        // if (header->gtw != mesh->addr) {
+        //     continue; /* This package is not for us */
+        // }
 
-        new_gtw = p1904_route_table_find(header->dst);
-        if (new_gtw == P1904_INVALID_ADDR) {
-            continue; /* We don't have way for this destination address */
-        }
+        new_gtw = p1904_mesh_addr_to_bin(P1904_ADDR_ANY);
+        // new_gtw = p1904_route_table_find(header->dst);
+        // if (new_gtw == P1904_INVALID_ADDR) {
+        //     continue; /* We don't have way for this destination address */
+        // }
 
         if (header->ttl == 0) {
-            p1904_mesh_ncmp_send(mesh, p1904_mesh_bin_to_addr(header->src),
-                P1904_NCMP_TYPE_TTL_EXPIRE, P1904_NCMP_CODE_DEFAUL);
+            // p1904_mesh_ncmp_send(mesh, p1904_mesh_bin_to_addr(header->src),
+            //     P1904_NCMP_TYPE_TTL_EXPIRE, P1904_NCMP_CODE_DEFAUL);
             continue; /* The package has expired */
         }
         else {
@@ -301,7 +309,7 @@ p1904_mesh_do_routing(p1904_mesh_t *mesh)
 
         header->gtw = new_gtw;
 
-        bytes_sent = p1904_lora_rak811_send(&(mesh->module), packet,
+        bytes_sent = p1904_lora_send(&(mesh->module), packet,
             packet_size);
         if (bytes_sent < 0) {
             return P1904_FAILED;
@@ -313,7 +321,7 @@ p1904_mesh_do_routing(p1904_mesh_t *mesh)
         printf("gtw: %s\n", p1904_mesh_bin_to_addr(header->gtw));
         printf("ttl: %u\n", header->ttl);
         printf("size: %u\n", header->size);
-        printf("checksum: %#x\n", header->checksum);
+        printf("checksum: %#x\n\n", header->checksum);
 #endif
     }
 

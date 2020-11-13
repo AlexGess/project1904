@@ -1,0 +1,15 @@
+<?xml version = "1.0"?>
+<!-- Network Map File -->
+<network_map>
+    <host name = "dev1">
+    <node>dev2</node>
+    <node>dev3</node>
+    </host>
+    <host name = "dev2">
+    <node>dev1</node>
+    </host>
+    <host name = "dev3">
+    <node>dev1</node>
+    <node>dev2</node>
+    </host>
+</network_map>

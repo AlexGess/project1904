@@ -5,7 +5,27 @@
 #include <stddef.h>
 
 #include "p1904_errno.h"
+
+#if (P1904_VIRTUAL_DEV)
+#include "p1904_lora_virtual.h"
+#else
 #include "p1904_lora_rak811.h"
+#endif
+
+#if (P1904_VIRTUAL_DEV)
+#define p1904_lora_init      p1904_lora_virtual_init
+#define p1904_lora_activate  p1904_lora_virtual_activate
+#define p1904_lora_send      p1904_lora_virtual_send
+#define p1904_lora_recv      p1904_lora_virtual_recv
+#define p1904_lora_fini      p1904_lora_virtual_fini
+#else
+#define p1904_lora_init      p1904_lora_rak811_init
+#define p1904_lora_activate  p1904_lora_rak811_activate
+#define p1904_lora_send      p1904_lora_rak811_send
+#define p1904_lora_recv      p1904_lora_rak811_recv
+#define p1904_lora_fini      p1904_lora_rak811_fini
+#endif
+
 
 #define P1904_DEFAULT_TTL      32
 #define P1904_MAX_PACKET_SIZE  512

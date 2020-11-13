@@ -4,35 +4,28 @@
 #include <stdlib.h>
 
 #include "p1904_mesh_api.h"
-#include "p1904_route_table.h"
 
+
+/*
+ * Usage: ./client <device> <addr> [map_file]
+ */
 
 int
-main(int argc, char *const argv[])
+main(int argc, char **argv)
 {
     p1904_mesh_t *mesh1;
-    const char *node_addr = "10.0.0.5";
 
-    /* 
-     * argv[1] is device
-     */
 
-    if (argc != 2) {
-        fprintf(stderr, "%s\n", "Invalid arguments");
+    if (argc < 3) {
+        fprintf(stderr, "%s\n", "Invalid number of arguments");
         return 1;
     }
 
-    mesh1 = p1904_mesh_create(argv[1], node_addr);
+    mesh1 = p1904_mesh_create(argv[1], argv[2]);
     if (!mesh1) {
         fprintf(stderr, "p1904_mesh_create() failed\n");
         return 1;
     }
-
-    p1904_route_table_add("127.0.0.1", "10.0.0.1", 1, P1904_DEFAULT_TTL);
-    p1904_route_table_add("127.0.0.2", "10.0.0.2", 1, P1904_DEFAULT_TTL);
-    p1904_route_table_add("127.0.0.3", "10.0.0.3", 1, P1904_DEFAULT_TTL);
-
-    p1904_route_table_print();
 
     if (p1904_mesh_do_routing(mesh1) != P1904_OK) {
         fprintf(stderr, "p1904_mesh_do_routing() failed\n");

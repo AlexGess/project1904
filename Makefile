@@ -2,24 +2,26 @@ BIN_FILE_CLIENT = client
 BIN_FILE_NODE = node
 
 SRC_CLIENT += client.c
-SRC_CLIENT += p1904_lora_rak811.c
+# SRC_CLIENT += p1904_lora_rak811.c
+SRC_CLIENT += p1904_lora_virtual.c
 SRC_CLIENT += p1904_crc32.c
-SRC_CLIENT += p1904_route_table.c
-SRC_CLIENT += p1904_ncmp.c
 SRC_CLIENT += p1904_mesh_api.c
-SRC_CLIENT += p1904_traceroute.c
 
 SRC_NODE += node.c
-SRC_NODE += p1904_lora_rak811.c
+# SRC_NODE += p1904_lora_rak811.c
+SRC_NODE += p1904_lora_virtual.c
 SRC_NODE += p1904_crc32.c
-SRC_NODE += p1904_route_table.c
-SRC_NODE += p1904_ncmp.c
 SRC_NODE += p1904_mesh_api.c
 
 override CFLAGS += -Iinclude
 override CFLAGS += -Wall -Wextra -Wno-uninitialized
-debug: override CFLAGS += -g3 -ggdb3 -O0 -DP1904_DEBUG
+override CFLAGS += -I/usr/include/libxml2
+override CFLAGS += -DP1904_VIRTUAL_DEV
+debug: override CFLAGS += -g3 -ggdb3 -O0 -DDEBUG
 build: override CFLAGS += -g0 -s -O3
+override LDFLAGS += -lxml2
+
+CC = gcc
 
 OBJ_FILES_CLIENT := $(patsubst %.c,obj/%.o,$(SRC_CLIENT))
 OBJ_FILES_NODE := $(patsubst %.c,obj/%.o,$(SRC_NODE))

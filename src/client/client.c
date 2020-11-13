@@ -3,35 +3,42 @@
 #include <stddef.h>
 
 #include "p1904_mesh_api.h"
-#include "p1904_route_table.h"
 
+/*
+ * Usage: ./client <device> <addr> [map_file]
+ */
 
 int
-main(int argc, char *const argv[])
+main(int argc, char **argv)
 {
     p1904_mesh_t *mesh1;
-    const char *client_addr = "127.0.0.5";
 
-    if (argc != 2) {
-        fprintf(stderr, "%s\n", "Invalid arguments");
+    if (argc < 3) {
+        fprintf(stderr, "%s\n", "Invalid number of arguments");
         return 1;
     }
 
-    mesh1 = p1904_mesh_create(argv[1], client_addr);
+    mesh1 = p1904_mesh_create(argv[1], argv[2]);
     if (!mesh1) {
         fprintf(stderr, "p1904_mesh_create() failed\n");
         return 1;
     }
 
-    p1904_route_table_add("127.0.0.1", "10.0.0.5", 1, P1904_DEFAULT_TTL);
-    p1904_route_table_add("127.0.0.2", "10.0.0.5", 1, P1904_DEFAULT_TTL);
-    p1904_route_table_add("127.0.0.3", "10.0.0.5", 1, P1904_DEFAULT_TTL);
+#if (P1904_VIRTUAL_DEV)
+    if (argc >= 4) {
+        p1904_lora_virtual_set_map_file(&(mesh1->module), argv[3]);
+    }
+    else {
+        fprintf(stderr, "%s\n", "Missing network map file for virtual device");
+        return 1;
+    }
+#endif
 
-    p1904_route_table_print();
 
-    p1904_mesh_sendto(mesh1, "127.0.0.1", "hello", sizeof("hello"));
-    // p1904_mesh_sendto(mesh1, "127.0.0.2", "hello", sizeof("hello"));
-    // p1904_mesh_sendto(mesh1, "127.0.0.3", "hello", sizeof("hello"));
+
+    const char data[] = "Hello, World!";
+
+    p1904_mesh_sendto(mesh1, "127.0.0.2", data, sizeof(data));
 
     p1904_mesh_destroy(mesh1);
 
