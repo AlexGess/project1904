@@ -2,48 +2,68 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "p1904_route_table.h"
-#include "p1904_ncmp.h"
-#include "p1904_crc32.h"
 #include "p1904_mesh_api.h"
 
+#if (P1904_VIRTUAL_DEV)
+#include "p1904_lora_virtual.h"
+#else
+#include "p1904_lora_rak811.h"
+#endif
 
-p1904_mesh_addr_t
+
+#if (P1904_VIRTUAL_DEV)
+#define p1904_lora_init      p1904_lora_virtual_init
+#define p1904_lora_activate  p1904_lora_virtual_activate
+#define p1904_lora_send      p1904_lora_virtual_send
+#define p1904_lora_recv      p1904_lora_virtual_recv
+#define p1904_lora_fini      p1904_lora_virtual_fini
+#else
+#define p1904_lora_init      p1904_lora_rak811_init
+#define p1904_lora_activate  p1904_lora_rak811_activate
+#define p1904_lora_send      p1904_lora_rak811_send
+#define p1904_lora_recv      p1904_lora_rak811_recv
+#define p1904_lora_fini      p1904_lora_rak811_fini
+#endif
+
+
+p1904_mac_addr_t
 p1904_mesh_addr_to_bin(const char *addr)
 {
-    char buf[16];
-    char *token;
-    char *save_ptr;
+    char buf[P1904_MAC_ADDR_STR_LEN];
+    char *token, *save_ptr;
     uint8_t *byte_ptr;
-    p1904_mesh_addr_t temp;
+
+    p1904_mac_addr_t temp;
 
     memmove(buf, addr, strlen(addr) + 1);
 
     byte_ptr = (uint8_t *) &temp;
 
-    token = strtok_r(buf, ".", &save_ptr);
+    token = strtok_r(buf, ":", &save_ptr);
 
-    for (size_t i = 0; i < 4; i++) {
-        *(byte_ptr + i) = atoi(token);
-        token = strtok_r(NULL, ".", &save_ptr);
+    for (size_t i = 0; i < 6; i++) {
+        *(byte_ptr + i) = strtol(token, NULL, 16);
+        token = strtok_r(NULL, ":", &save_ptr);
     }
 
     return temp;
 }
 
 const char *
-p1904_mesh_bin_to_addr(p1904_mesh_addr_t addr)
+p1904_mesh_addr_to_str(char *buf, p1904_mac_addr_t addr)
 {
-    static _Thread_local char buf[16];
     uint8_t *byte_ptr;
 
     byte_ptr = (uint8_t *) &addr;
 
-    snprintf(buf, sizeof(buf), "%u.%u.%u.%u",
+    snprintf(buf, P1904_MAC_ADDR_STR_LEN,
+        "%02hhx:%02hhx:%02hhx:%02hhx:%02hhx:%02hhx",
         *(byte_ptr+0),
         *(byte_ptr+1),
         *(byte_ptr+2),
-        *(byte_ptr+3));
+        *(byte_ptr+3),
+        *(byte_ptr+4),
+        *(byte_ptr+5));
 
     return buf;
 }
@@ -52,7 +72,6 @@ p1904_mesh_t *
 p1904_mesh_create(const char *device, const char *addr)
 {
     p1904_mesh_t *mesh;
-    p1904_mesh_addr_t bin_addr;
     int err;
 
     mesh = malloc(sizeof(p1904_mesh_t));
@@ -65,10 +84,7 @@ p1904_mesh_create(const char *device, const char *addr)
         goto failed;
     }
 
-    bin_addr = p1904_mesh_addr_to_bin(addr);
-
-
-    mesh->addr = bin_addr;
+    mesh->addr = p1904_mesh_addr_to_bin(addr);
 
     return mesh;
 
@@ -81,10 +97,25 @@ failed:
     return NULL;
 }
 
-p1904_err_t
-p1904_mesh_sendto(p1904_mesh_t *mesh, const char *addr, const char *data,
-    size_t len)
+void
+p1904_mesh_destroy(p1904_mesh_t *mesh)
 {
+    free(mesh);
+}
+
+
+p1904_err_t
+p1904_mesh_sendto(p1904_mesh_t *mesh, p1904_mac_addr_t addr,
+    uint8_t *data, size_t len)
+{
+
+
+    p1904_mac_sendto(&(mesh->module), addr, data, len);
+
+
+}
+
+#if 0
     static uint8_t packet[P1904_MAX_PACKET_SIZE];
     p1904_mesh_header_t *header;
     p1904_mesh_addr_t addr_bin;
@@ -328,8 +359,5 @@ p1904_mesh_do_routing(p1904_mesh_t *mesh)
     return P1904_OK;
 }
 
-void
-p1904_mesh_destroy(p1904_mesh_t *mesh)
-{
-    free(mesh);
-}
+
+#endif

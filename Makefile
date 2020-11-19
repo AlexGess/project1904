@@ -5,12 +5,16 @@ SRC_CLIENT += client.c
 # SRC_CLIENT += p1904_lora_rak811.c
 SRC_CLIENT += p1904_lora_virtual.c
 SRC_CLIENT += p1904_crc32.c
+SRC_CLIENT += p1904_random.c
+SRC_CLIENT += p1904_mac.c
 SRC_CLIENT += p1904_mesh_api.c
 
 SRC_NODE += node.c
 # SRC_NODE += p1904_lora_rak811.c
 SRC_NODE += p1904_lora_virtual.c
 SRC_NODE += p1904_crc32.c
+SRC_NODE += p1904_random.c
+SRC_NODE += p1904_mac.c
 SRC_NODE += p1904_mesh_api.c
 
 override CFLAGS += -Iinclude

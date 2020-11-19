@@ -6,6 +6,7 @@
 
 /*
  * Usage: ./client <device> <addr> [map_file]
+ * Example: ./client dev1 00:00:00:00:00:01 config/network_map.xml
  */
 
 int
@@ -35,10 +36,10 @@ main(int argc, char **argv)
 #endif
 
 
+    uint8_t data[] = "Hello, World!";
 
-    const char data[] = "Hello, World!";
-
-    p1904_mesh_sendto(mesh1, "127.0.0.2", data, sizeof(data));
+    p1904_mesh_sendto(mesh1, p1904_mesh_addr_to_bin("00:00:00:00:00:02"),
+        data, sizeof(data));
 
     p1904_mesh_destroy(mesh1);
 
